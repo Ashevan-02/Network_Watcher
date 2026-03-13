@@ -1,4 +1,4 @@
-FROM openjdk:17-slim
+FROM eclipse-temurin:17-jdk-alpine
 
 # Install Nmap for vulnerability scanning
 RUN apt-get update && \
