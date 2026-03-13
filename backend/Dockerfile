@@ -1,10 +1,7 @@
 FROM eclipse-temurin:17-jdk-alpine
 
 # Install Nmap for vulnerability scanning
-RUN apt-get update && \
-    apt-get install -y nmap && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache nmap
 
 # Set working directory
 WORKDIR /app
