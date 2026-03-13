@@ -84,8 +84,13 @@ cd Network_Watcher
 cp .env.example .env
 nano .env  # Edit with your settings
 
+# Configure server IP (IMPORTANT!)
+chmod +x configure-server.sh
+./configure-server.sh
+# Enter your server's public IP when prompted
+
 # Start services
-docker compose up -d
+docker compose up -d --build
 
 # Check status
 docker compose ps
