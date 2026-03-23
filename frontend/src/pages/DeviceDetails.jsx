@@ -89,8 +89,12 @@ export const DeviceDetails = () => {
                 <Typography><strong>MAC Address:</strong> {device.macAddress || 'N/A'}</Typography>
                 <Typography><strong>OS:</strong> {device.operatingSystem || 'Unknown'}</Typography>
                 <Typography><strong>Manufacturer:</strong> {device.macVendor || 'Unknown'}</Typography>
-                <Typography><strong>First Seen:</strong> {formatDate(device.firstSeen)}</Typography>
+                <Typography><strong>Connected Time:</strong> {formatDate(device.firstSeen)}</Typography>
                 <Typography><strong>Last Seen:</strong> {formatDate(device.lastSeen)}</Typography>
+                <Typography>
+                  <strong>Leave Time:</strong>{' '}
+                  {device.leaveTime ? formatDate(device.leaveTime) : 'Still online / not yet left'}
+                </Typography>
               </Box>
               <Stack direction="row" spacing={2} mt={2}>
                 <Button variant="contained" color="error" onClick={handleDisconnect} disabled={actionLoading}>

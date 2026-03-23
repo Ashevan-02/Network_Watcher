@@ -56,6 +56,10 @@ public class Device {
     @Column(name = "last_seen")
     private LocalDateTime lastSeen;
 
+    // When device was first observed as OFFLINE (optional)
+    @Column(name = "leave_time")
+    private LocalDateTime leaveTime;
+
     // Whether device has known vulnerabilities
     @Column(name = "is_vulnerable")
     private Boolean isVulnerable = false;

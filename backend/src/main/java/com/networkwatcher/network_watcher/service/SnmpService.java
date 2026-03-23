@@ -3,7 +3,6 @@ package com.networkwatcher.network_watcher.service;
 import com.networkwatcher.network_watcher.model.Device;
 import org.snmp4j.CommunityTarget;
 import org.snmp4j.PDU;
-import org.snmp4j.ScopedPDU;
 import org.snmp4j.Snmp;
 import org.snmp4j.TransportMapping;
 import org.snmp4j.smi.Address;
@@ -19,6 +18,8 @@ import org.springframework.stereotype.Service;
 public class SnmpService {
     @Autowired
     private DeviceService deviceService;
+
+    public record SnmpOctetCounters(long inOctets, long outOctets) {}
 
     public boolean enrichDevice(String ipAddress, String community) {
         try {
@@ -75,5 +76,64 @@ public class SnmpService {
             return false;
         }
         return false;
+    }
+
+    /**
+     * Best-effort per-device traffic counters via SNMP.
+     * Sums IF-MIB counters across interfaces: ifInOctets/ifOutOctets.
+     */
+    public SnmpOctetCounters readIfMibOctetsSum(String ipAddress, String community) {
+        TransportMapping<UdpAddress> transport = null;
+        Snmp snmp = null;
+        try {
+            Address targetAddress = GenericAddress.parse("udp:" + ipAddress + "/161");
+            transport = new DefaultUdpTransportMapping();
+            transport.listen();
+            snmp = new Snmp(transport);
+
+            CommunityTarget target = new CommunityTarget();
+            target.setCommunity(new OctetString(community));
+            target.setAddress(targetAddress);
+            target.setRetries(1);
+            target.setTimeout(1500);
+            target.setVersion(org.snmp4j.mp.SnmpConstants.version2c);
+
+            long inSum = walkAndSum(snmp, target, new OID("1.3.6.1.2.1.2.2.1.10")); // ifInOctets
+            long outSum = walkAndSum(snmp, target, new OID("1.3.6.1.2.1.2.2.1.16")); // ifOutOctets
+            return new SnmpOctetCounters(inSum, outSum);
+        } catch (Exception e) {
+            return null;
+        } finally {
+            try { if (snmp != null) snmp.close(); } catch (Exception ignored) {}
+            try { if (transport != null) transport.close(); } catch (Exception ignored) {}
+        }
+    }
+
+    private long walkAndSum(Snmp snmp, CommunityTarget target, OID baseOid) throws Exception {
+        long sum = 0L;
+        OID currentOid = baseOid;
+        for (int i = 0; i < 64; i++) { // safety cap
+            PDU pdu = new PDU();
+            pdu.add(new org.snmp4j.smi.VariableBinding(currentOid));
+            pdu.setType(PDU.GETNEXT);
+
+            org.snmp4j.event.ResponseEvent event = snmp.getNext(pdu, target);
+            if (event == null || event.getResponse() == null || event.getResponse().getVariableBindings().isEmpty()) {
+                break;
+            }
+
+            var vb = event.getResponse().getVariableBindings().get(0);
+            OID nextOid = vb.getOid();
+            if (nextOid == null || !nextOid.startsWith(baseOid)) break;
+
+            String v = vb.getVariable().toString();
+            try {
+                sum += Long.parseLong(v);
+            } catch (NumberFormatException ignored) {
+                // skip non-numeric
+            }
+            currentOid = nextOid;
+        }
+        return sum;
     }
 }

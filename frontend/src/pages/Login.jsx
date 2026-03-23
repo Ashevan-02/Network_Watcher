@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Box, Card, CardContent, TextField, Button, Typography, Alert } from '@mui/material';
-import axios from 'axios';
+import { authService } from '../services/authService';
 
 export const Login = () => {
   const [username, setUsername] = useState('');
@@ -14,16 +14,7 @@ export const Login = () => {
     setLoading(true);
     
     try {
-      // Direct API call
-      const response = await axios.post('http://localhost:8080/api/auth/login', {
-        username,
-        password
-      });
-      
-      // Save token and user
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('user', JSON.stringify({ username: response.data.username }));
-      
+      await authService.login(username, password);
       // Force page reload to dashboard
       window.location.href = '/';
     } catch (err) {

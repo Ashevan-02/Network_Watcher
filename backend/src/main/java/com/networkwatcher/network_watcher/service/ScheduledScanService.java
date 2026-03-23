@@ -55,7 +55,13 @@ public class ScheduledScanService {
                                           : com.networkwatcher.network_watcher.model.Device.DeviceStatus.OFFLINE;
                 if (d.getStatus() != newStatus) {
                     d.setStatus(newStatus);
-                    d.setLastSeen(java.time.LocalDateTime.now());
+                    var now = java.time.LocalDateTime.now();
+                    if (newStatus == com.networkwatcher.network_watcher.model.Device.DeviceStatus.ONLINE) {
+                        d.setLastSeen(now);
+                        d.setLeaveTime(null);
+                    } else {
+                        if (d.getLeaveTime() == null) d.setLeaveTime(now);
+                    }
                     deviceService.saveDevice(d);
                     wsService.notifyDeviceStatus(d.getIpAddress(), newStatus.toString());
 

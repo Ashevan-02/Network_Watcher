@@ -212,14 +212,14 @@ public class PacketService {
     private String mapDomainToApp(String host) {
         if (host == null) return "Other";
         String h = host.toLowerCase(Locale.ROOT);
-        if (h.contains("whatsapp")) return "WhatsApp";
-        if (h.contains("facebook") || h.contains("fbcdn") || h.contains("instagram")) return "Meta";
-        if (h.contains("youtube") || h.contains("googlevideo")) return "YouTube";
-        if (h.contains("netflix")) return "Netflix";
-        if (h.contains("tiktok")) return "TikTok";
+        if (h.contains("whatsapp") || h.contains("whatsapp.net")) return "WhatsApp";
+        if (h.contains("facebook") || h.contains("fbcdn") || h.contains("instagram") || h.contains("instagram.com") || h.contains("messenger.com")) return "Meta";
+        if (h.contains("youtube") || h.contains("googlevideo") || h.contains("ytimg.com") || h.contains("youtu.be")) return "YouTube";
+        if (h.contains("netflix") || h.contains("nflxvideo.net")) return "Netflix";
+        if (h.contains("tiktok") || h.contains("tiktokcdn")) return "TikTok";
         if (h.contains("snapchat")) return "Snapchat";
         if (h.contains("x.com") || h.contains("twitter")) return "Twitter";
-        if (h.contains("microsoft") || h.contains("windowsupdate") || h.contains("live.com")) return "Microsoft";
+        if (h.contains("microsoft") || h.contains("windowsupdate") || h.contains("live.com") || h.contains("office.com") || h.contains("skype.com")) return "Microsoft";
         if (h.contains("apple") || h.contains("icloud") || h.contains("itunes")) return "Apple";
         if (h.contains("google") || h.contains("gstatic") || h.contains("googleapis")) return "Google";
         return "Other";

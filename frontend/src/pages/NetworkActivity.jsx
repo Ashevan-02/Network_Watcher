@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, CircularProgress, TextField, Button, Stack } from '@mui/material';
+import { Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, CircularProgress, TextField, Button, Stack, Chip } from '@mui/material';
 import { packetService } from '../services/packetService';
 import { formatDate } from '../utils/formatters';
 
@@ -11,16 +11,19 @@ export const NetworkActivity = () => {
   const [capturing, setCapturing] = useState(false);
   const [actionMessage, setActionMessage] = useState('');
   const [polling, setPolling] = useState(false);
+  const [appSummary, setAppSummary] = useState({});
 
   useEffect(() => {
     const fetchPackets = async () => {
       try {
-        const [respAll, respHttp] = await Promise.all([
+        const [respAll, respHttp, respApps] = await Promise.all([
           packetService.getPackets(),
-          packetService.getHttpPackets()
+          packetService.getHttpPackets(),
+          packetService.getApps()
         ]);
         setPackets(respAll.data);
         setHttpPackets(respHttp.data);
+        setAppSummary(respApps.data);
       } catch (err) {
         console.error(err);
       } finally {
@@ -34,12 +37,14 @@ export const NetworkActivity = () => {
     if (!polling) return;
     const id = setInterval(async () => {
       try {
-        const [respAll, respHttp] = await Promise.all([
+        const [respAll, respHttp, respApps] = await Promise.all([
           packetService.getPackets(),
-          packetService.getHttpPackets()
+          packetService.getHttpPackets(),
+          packetService.getApps()
         ]);
         setPackets(respAll.data);
         setHttpPackets(respHttp.data);
+        setAppSummary(respApps.data);
       } catch (e) {
         console.error(e);
       }
@@ -105,12 +110,14 @@ export const NetworkActivity = () => {
             onClick={async () => {
               try {
                 await packetService.clearPackets();
-                const [respAll, respHttp] = await Promise.all([
+                const [respAll, respHttp, respApps] = await Promise.all([
                   packetService.getPackets(),
-                  packetService.getHttpPackets()
+                  packetService.getHttpPackets(),
+                  packetService.getApps()
                 ]);
                 setPackets(respAll.data);
                 setHttpPackets(respHttp.data);
+                setAppSummary(respApps.data);
               } catch (e) {
                 console.error(e);
               }
@@ -124,6 +131,17 @@ export const NetworkActivity = () => {
         )}
       </Box>
       
+      {Object.keys(appSummary).length > 0 && (
+        <Box mb={3}>
+          <Typography variant="h5" gutterBottom>App Usage</Typography>
+          <Stack direction="row" flexWrap="wrap" gap={1}>
+            {Object.entries(appSummary).sort((a, b) => b[1] - a[1]).map(([app, count]) => (
+              <Chip key={app} label={`${app}: ${count}`} color="primary" variant="outlined" />
+            ))}
+          </Stack>
+        </Box>
+      )}
+
       <TableContainer component={Paper}>
         <Table>
           <TableHead>

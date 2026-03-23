@@ -18,7 +18,7 @@ A comprehensive network monitoring and security tool for the NCSA organization t
 ### ✅ Phase 3: Bandwidth Monitoring
 - Present data usage (bandwidth)
 - Track bytes sent/received
-- Monitor network traffic per device
+- Monitor network traffic per device (uses SNMP IF-MIB counters when available; falls back to host-level totals if SNMP is unavailable)
 
 ### ✅ Phase 4: Packet Analysis
 - Scan through HTTP packets
@@ -30,6 +30,7 @@ A comprehensive network monitoring and security tool for the NCSA organization t
 - Disconnect any device if necessary
 - Reconnect devices
 - List blocked devices
+  - Note: current "disconnect" uses Windows Firewall rules on the watcher host to block traffic to/from the target IP (host-scoped isolation unless the watcher is the network gateway)
 
 ### ✅ Phase 6: Reporting
 - Generate comprehensive network reports

@@ -27,10 +27,11 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .cors(cors -> cors.configurationSource(request -> {
                 var corsConfig = new org.springframework.web.cors.CorsConfiguration();
-                corsConfig.addAllowedOrigin("http://localhost:5173");
+                corsConfig.addAllowedOriginPattern("*");
                 corsConfig.addAllowedMethod("*");
                 corsConfig.addAllowedHeader("*");
-                corsConfig.setAllowCredentials(true);
+                // We use Authorization headers (JWT), not cookies/sessions.
+                corsConfig.setAllowCredentials(false);
                 return corsConfig;
             }))
             .authorizeHttpRequests(auth -> auth

@@ -29,7 +29,7 @@ public class BandwidthService {
             Device device = deviceService.getDeviceByIp(ipAddress)
                     .orElseThrow(() -> new RuntimeException("Device not found"));
 
-            Map<String, Long> stats = getNetworkStats(ipAddress);
+            Map<String, Long> stats = getPerDeviceNetworkStats(device);
 
             BandwidthUsage usage = new BandwidthUsage();
             usage.setDevice(device);
@@ -46,7 +46,13 @@ public class BandwidthService {
         }
     }
 
-    private Map<String, Long> getNetworkStats(String ipAddress) {
+    @Autowired
+    private SnmpService snmpService;
+
+    @Autowired
+    private SnmpSettingsService snmpSettingsService;
+
+    private Map<String, Long> getPerDeviceNetworkStats(Device device) {
         Map<String, Long> stats = new HashMap<>();
         stats.put("bytesSent", 0L);
         stats.put("bytesReceived", 0L);
@@ -54,6 +60,43 @@ public class BandwidthService {
         stats.put("packetsReceived", 0L);
 
         try {
+            // Prefer SNMP per-device counters when available
+            SnmpService.SnmpOctetCounters counters = null;
+            var communities = snmpSettingsService.getCommunities();
+            if (communities.isEmpty()) {
+                counters = snmpService.readIfMibOctetsSum(device.getIpAddress(), "public");
+            } else {
+                for (String c : communities) {
+                    counters = snmpService.readIfMibOctetsSum(device.getIpAddress(), c);
+                    if (counters != null) break;
+                }
+            }
+
+            if (counters != null) {
+                long absIn = counters.inOctets();
+                long absOut = counters.outOctets();
+
+                // Store deltas since last measurement to approximate bandwidth usage over time.
+                var latest = bandwidthRepository.findLatestByDeviceId(device.getId());
+                if (!latest.isEmpty()) {
+                    var prev = latest.get(0);
+                    long prevIn = prev.getBytesReceived() == null ? 0L : prev.getBytesReceived();
+                    long prevOut = prev.getBytesSent() == null ? 0L : prev.getBytesSent();
+
+                    long deltaIn = absIn >= prevIn ? (absIn - prevIn) : absIn;
+                    long deltaOut = absOut >= prevOut ? (absOut - prevOut) : absOut;
+
+                    stats.put("bytesReceived", deltaIn);
+                    stats.put("bytesSent", deltaOut);
+                } else {
+                    // First sample: store absolute counters (deltas not available yet)
+                    stats.put("bytesReceived", absIn);
+                    stats.put("bytesSent", absOut);
+                }
+                return stats;
+            }
+
+            // Fallback: host-level stats (NOT per-device). Keep for demo environments without SNMP.
             String command = "netstat -e";
             Process process = Runtime.getRuntime().exec(command);
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
