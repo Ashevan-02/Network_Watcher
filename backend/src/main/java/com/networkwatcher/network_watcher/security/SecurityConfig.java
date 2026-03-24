@@ -30,8 +30,7 @@ public class SecurityConfig {
                 corsConfig.addAllowedOriginPattern("*");
                 corsConfig.addAllowedMethod("*");
                 corsConfig.addAllowedHeader("*");
-                // We use Authorization headers (JWT), not cookies/sessions.
-                corsConfig.setAllowCredentials(false);
+                corsConfig.setAllowCredentials(true);
                 return corsConfig;
             }))
             .authorizeHttpRequests(auth -> auth
